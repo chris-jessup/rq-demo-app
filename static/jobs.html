@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Simple login form</title>
+    <link href="./static/css.css" rel="stylesheet">
+    <style>
+      html, body {
+      display: flex;
+      justify-content: center;
+      font-family: Roboto, Arial, sans-serif;
+      font-size: 15px;
+      }
+      form {
+      border: 5px solid #f1f1f1;
+      }
+      input[type=text], input[type=password] {
+      width: 100%;
+      padding: 16px 8px;
+      margin: 8px 0;
+      display: inline-block;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      }
+      .mybutton {
+      background-color: #8ebf42;
+      color: white;
+      padding: 14px 0;
+      margin: 10px 0;
+      border: none;
+      cursor: grabbing;
+      width: 100%;
+      }
+      h1 {
+      text-align:center;
+      fone-size:18;
+      }
+      button:hover {
+      opacity: 0.8;
+      }
+      .formcontainer {
+      text-align: left;
+      margin: 24px 50px 12px;
+      }
+      .container {
+      padding: 16px 0;
+      text-align:left;
+      }
+      span.psw {
+      float: right;
+      padding-top: 0;
+      padding-right: 15px;
+      }
+      /* Change styles for span on extra small screens */
+      @media screen and (max-width: 300px) {
+      span.psw {
+      display: block;
+      float: none;
+      }
+      table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      }
+    </style>
+  </head>
+  <body>
+      <form action="javascript:void(0)">
+      <h1>RQ Demo</h1>
+      <div class="formcontainer">
+      <hr/>
+
+      <h2>Jobs List</h2>
+      <table id="table">
+      </table>
+
+      </div>
+    </form>
+  </body>
+
+  <script>
+
+      let global_data = null;
+
+      function details(id){
+          for(el of global_data){
+            if(el.id != id) continue
+            console.log("data",el)
+            console.log("data",el.traceback)
+          }
+      }
+
+      const get_jobs_data = () => {
+         const fill_table = (data) => {
+            global_data = data;
+            const table = document.querySelector('#table')
+            function format_result(result) {
+                if(result) {
+                  if(result.length > 50){
+                    return result.substring(0,50) + '...'
+                  }
+                }
+                return result;
+            }
+            function format_traceback(traceback) {
+                if(traceback) {
+                    lines = traceback.split('\n')
+                    return format_result(lines[lines.length-1])
+                }
+                return traceback;
+            }
+            let table_inner = ` <tr><th>ID</th><th>Function</th><th>Job Status</th><th>TTL (Seconds)</th><th>Queued At</th><th>Started At</th><th>Ended At</th><th>Args</th><th>Memory Usage</th><th>Result</th><th>Traceback</th></tr>`
+            for(el of data){
+                
+                table_inner += `
+                          <tr id="${el.id}" onclick="details(this.id)">
+                          <td>${el.id.substring(0,4)}...</td>
+                          <td>${el.call}</td>
+                          <td>${el.status}</td>
+                          <td>${el.ttl}</td>
+                          <td>${el.created_at}</td>
+                          <td>${el.started_at || ''}</td>
+                          <td>${el.ended_at || ''}</td>
+                          <td>${format_result(el.args)}</td>
+                          <td>${el.memory_usage}</td>
+                          <td>${format_result(el.result) || ''}</td>
+                          <td>${format_traceback(el.traceback) || ''}</td>
+                          </tr>
+                `
+            }
+            table.innerHTML+=table_inner;
+
+            make_tables_sortable();
+
+
+
+        }
+
+        function make_tables_sortable(){
+            /* Taken from https://stackoverflow.com/questions/14267781/sorting-html-table-with-javascript */
+            const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
+
+            const comparer = (idx, asc) => (a, b) => ((v1, v2) => 
+                v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) ? v1 - v2 : v1.toString().localeCompare(v2)
+                )(getCellValue(asc ? a : b, idx), getCellValue(asc ? b : a, idx));
+
+            // do the work...
+            document.querySelectorAll('th').forEach(th => th.addEventListener('click', (() => {
+                const table = th.closest('table');
+                Array.from(table.querySelectorAll('tr:nth-child(n+2)'))
+                    .sort(comparer(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
+                    .forEach(tr => table.appendChild(tr) );
+            })));
+          }
+
+        const r = new XMLHttpRequest();
+        r.responseType = 'json'
+        r.onreadystatechange = function () {
+          if (r.readyState != 4 || r.status != 200) return;
+          fill_table(this.response)
+        };
+        r.open("GET", "jobs")
+        r.send();
+      }
+
+      const update_functions = () => {
+
+      }
+      window.onload = () => {
+        get_jobs_data()
+      }
+  </script>
+</html>
