@@ -174,7 +174,6 @@ def run_api():
 
 
 if __name__ == '__main__':
-    import sys
-    if len(sys.argv) > 1 and sys.argv[1] == 'app':
-        run_api()
+    run_api()
+
 
